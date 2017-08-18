@@ -1,0 +1,35 @@
+1. Ruby has a vast collection of third party libraries, and most of them are released in the form of a gem.
+RubyGems is a packaging system designed to facilitate the creation, sharing and installation of libraries.
+Ruby gems are very useful on projects. They consist of pre made functions depending on your needs. With the help of gems,
+it will save you a considerable amount of time instead of constructing functions manually.
+
+2. With Eager loading, a function does everything that it is programmed to do when it is called. As for lazy loading, a function only do a calculation when required.
+
+3. CREATE TABLE creates table. INSERT INTO function adds value to the table specified.
+
+4. Extend - adds the specified module's methods and constant to the target's metaclass. Extend is a public method.
+Include - mixes the specified module's methods as instance methods in the target's module/class. Include is a private method.
+
+5. Changing from extend to include is necessary as we only want to record a change on a particular method and not an entire class. Without doing so will result to unnecessary changes to an entire class.
+
+6. UPDATE character
+   SET name = "Jar-Jar Binks"
+   WHERE id = 1
+   ;
+
+7. I believe it's because we removed the initialize methods on both address_book.rb and entry.rb. Due to that discrepancy, entries is only giving us nil values. I believe we need to reestablish the an updated initialize
+method, or complete the code in a way that we will connect it to the database created.
+
+8. def snake(snake_word)
+    string = snake_word.gsub(/::/, '/')
+    string.gsub!((), )
+  end
+
+9. def find_by(attribute, value)
+    row = connection.get_first_row <<-SQL
+      SELECT #{columns.join ","} FROM #{table}
+      WHERE attribute = #{BlocRecord::Utility.sql_strings(value)}
+    SQL
+
+    return find_object(row)
+   end

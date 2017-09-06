@@ -38,6 +38,7 @@ module Persistence
   end
 
   module ClassMethods
+
     def create(attrs)
       attrs = BlocRecord::Utility.convert_keys(attrs)
       attrs.delete "id"
@@ -54,29 +55,50 @@ module Persistence
     end
 
     def update(ids, updates)
-      updates = BlocRecord::Utility.convert_keys(updates)
-      updates.delete "id"
+      case updates
+      when Hash
+        updates = BlocRecord::Utility.convert_keys(updates)
+        updates.delete "id"
 
-      updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
+        updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
 
-      if ids.class == Fixnum
-        where_clause = "WHERE id = #{ids};"
-      elsif ids.class == Array
-        where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"
-      else
-        where_clause = ";"
+        if ids.class == Fixnum
+          where_clause = "WHERE id = #{ids};"
+        elsif ids.class == Array
+          where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"
+        else
+          where_clause = ";"
+        end
+
+        connection.execute <<-SQL
+          UPDATE #{table}
+          SET #{updates_array * ","} #{where_clause}
+        SQL
+
+        true
+      when Array
+        updates.each_with_index do |data, index|
+          update(ids[index], data)
+        end
       end
-
-      connection.execute <<-SQL
-        UPDATE #{table}
-        SET #{updates_array * ","} #{where_clause}
-      SQL
-
-      true
     end
 
     def update_all(update)
       update(nil, updates)
     end
+
+    def method_missing(method, *args, &block)
+      
+    end
+
+    # def method_missing(methId, *args)
+    #   attribute = methId.to_s
+    #   if columns.include?(attribute)
+    #     find_by(attribute, *args)
+    #   else
+    #     puts "There's no item called #{attribute} here -- please try again."
+    #   end
+    #   method_missing(methId, *args)
+    # end
   end
 end

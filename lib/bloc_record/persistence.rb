@@ -37,7 +37,12 @@ module Persistence
     self.class.update(self.id, updates)
   end
 
+  def destroy
+    self.class.destroy(self.id)
+  end
+
   module ClassMethods
+
     def create(attrs)
       attrs = BlocRecord::Utility.convert_keys(attrs)
       attrs.delete "id"
@@ -54,29 +59,95 @@ module Persistence
     end
 
     def update(ids, updates)
-      updates = BlocRecord::Utility.convert_keys(updates)
-      updates.delete "id"
+      case updates
+      when Hash
+        updates = BlocRecord::Utility.convert_keys(updates)
+        updates.delete "id"
 
-      updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
+        updates_array = updates.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}" }
 
-      if ids.class == Fixnum
-        where_clause = "WHERE id = #{ids};"
-      elsif ids.class == Array
-        where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"
-      else
-        where_clause = ";"
+        if ids.class == Fixnum
+          where_clause = "WHERE id = #{ids};"
+        elsif ids.class == Array
+          where_clause = ids.empty? ? ";" : "WHERE id IN (#{ids.join(",")});"
+        else
+          where_clause = ";"
+        end
+
+        connection.execute <<-SQL
+          UPDATE #{table}
+          SET #{updates_array * ","} #{where_clause}
+        SQL
+
+        true
+      when Array
+        updates.each_with_index do |data, index|
+          update(ids[index], data)
+        end
       end
-
-      connection.execute <<-SQL
-        UPDATE #{table}
-        SET #{updates_array * ","} #{where_clause}
-      SQL
-
-      true
     end
 
     def update_all(update)
       update(nil, updates)
     end
+
+    def destroy(*id)
+      if id.length > 1
+        where_clause = "WHERE id IN (#{id.join(",")});"
+      else
+        where_clause = "WHERE id = #{id.first};"
+      end
+
+
+      connection.execute <<-SQL
+        DELETE FROM #{table} #{where_clause}
+      SQL
+
+      true
+    end
+
+    def destroy_all(conditions_hash=nil)
+      if conditions_hash && !conditions_hash.empty?
+        conditions_hash = BlocRecord::Utility.convert_keys(conditions_hash)
+        conditions = conditions_hash.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(" and ")
+
+        connection.execute <<-SQL
+          DELETE FROM #{table}
+          WHERE #{conditions};
+        SQL
+
+      else
+        connection.execute <<-SQL
+          DELETE FROM #{table}
+        SQL
+      end
+      true
+    end
+
+    def method_missing(method, *args, &block)
+      if method.include? "update"
+        m = method.select { |key, value| arg.include(key) }
+        self.delete_if { |key, value| arg.include(key) }
+      end
+      update(m, arg[0])
+    end
+
+
+    #   def method_missing(method, *args, &block)
+    #     if m.include? "update" # check to see if the method name includes "update"
+    #       # extract the second part of method (the part after "e_") and assign it to a variable
+    #       # indexOf might be useful for this
+    #     update(m, args[0]) # call the update method with the extracted string and the first arg
+    #   end
+
+    # def method_missing(methId, *args)
+    #   attribute = methId.to_s
+    #   if columns.include?(attribute)
+    #     find_by(attribute, *args)
+    #   else
+    #     puts "There's no item called #{attribute} here -- please try again."
+    #   end
+    #   method_missing(methId, *args)
+    # end
   end
 end

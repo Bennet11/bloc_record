@@ -7,27 +7,19 @@ module BlocRecord
     end
 
     def take(num=1)
-      self[0..num-1]
+      if self.any?
+        self[0, num]
+      else
+        false
+      end
     end
 
-    def where
-      result = []
-      for obj in self
-        for key in data.keys
-          result.insert(self.first.class.where("id" => obj.id, key => data[key]))
-        end
-      end
-      result
+    def where(hash)
+      self.select {|obj| obj.attributes[hash.keys.first] == hash.values.first}
     end
 
     def not
-      result = []
-      for obj in self
-        for key in data.keys
-          result.insert(self.first.class.where("id" => obj.id, key => !data[key]))
-        end
-      end
-      result
+      self.select {|obj| obj.attributes[hash.keys.first] != hash.values.first}
     end
   end
 end

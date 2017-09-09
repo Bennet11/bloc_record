@@ -89,12 +89,10 @@ module Persistence
 
     def method_missing(method, *args, &block)
       if method.include? "update"
-        m = method.select { |key, value| arg.include(key) }
-        self.delete_if { |key, value| arg.include(key) }
+        m = method[method.index("_")+1..-1]
       end
-      update(m, arg[0])
+      update_attribute(m, arg[0])
     end
-
 
     # def method_missing(methId, *args)
     #   attribute = methId.to_s

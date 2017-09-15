@@ -22,5 +22,13 @@ module BlocRecord
         self.instance_variable_set("@#{col}", options[col])
       end
     end
+
+    def self.execute(sql)
+      if BlocRecord.database_type == :sqlite3
+        self.connection.execute(sql)
+      elsif BlocRecord.database_type == :pg
+        self.connection.exec(sql)
+      end
+    end
   end
 end

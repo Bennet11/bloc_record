@@ -21,7 +21,7 @@ module Persistence
 
     fields = self.class.attributes.map { |col| "#{col}=#{BlocRecord::Utility.sql_strings(self.instance_variable_get("@#{col}"))}" }.join(",")
 
-    self.class.connection.execute <<-SQL
+    self.class.execute <<-SQL
       UPDATE #{self.class.table}
       SET #{fields}
       WHERE id = #{self.id};
@@ -49,13 +49,13 @@ module Persistence
       attrs.delete "id"
       vals = attributes.map { |key| BlocRecord::Utility.sql_strings(attrs[key]) }
 
-      connection.execute <<-SQL
+      self.class.execute <<-SQL
         INSERT INTO #{table} (#{attributes.join ","})
         VALUES (#{vals.join ","});
       SQL
 
       data = Hash[attributes.zip attrs.values]
-      data["id"] = connection.execute("SELECT last_insert_rowid();")[0][0]
+      data["id"] = self.class.execute("SELECT last_insert_rowid();")[0][0]
       new(data)
     end
 
@@ -75,7 +75,7 @@ module Persistence
           where_clause = ";"
         end
 
-        connection.execute <<-SQL
+        self.class.execute <<-SQL
           UPDATE #{table}
           SET #{updates_array * ","} #{where_clause}
         SQL
@@ -100,7 +100,7 @@ module Persistence
       end
 
 
-      connection.execute <<-SQL
+      self.class.execute <<-SQL
         DELETE FROM #{table} #{where_clause}
       SQL
 
@@ -118,12 +118,12 @@ module Persistence
         when Array
           conditions = conditions_hash.join(",")
         end
-        connection.execute <<-SQL
+        self.class.execute <<-SQL
           DELETE FROM #{table}
           WHERE #{conditions}
         SQL
       else
-        connection.execute <<-SQL
+        self.class.execute <<-SQL
           DELETE FROM #{table}
         SQL
       end

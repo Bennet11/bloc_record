@@ -107,6 +107,9 @@ module Persistence
       true
     end
 
+#  Entry.destroy_all("phone_number = '999-999-9999'")
+#  Entry.destroy_all("phone_number = ?", '999-999-9999')
+
     def destroy_all(conditions_hash=nil)
       if conditions_hash && !conditions_hash.empty?
         case conditions_hash

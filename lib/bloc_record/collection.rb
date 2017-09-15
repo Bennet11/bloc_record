@@ -21,5 +21,11 @@ module BlocRecord
     def not
       self.select {|obj| obj.attributes[hash.keys.first] != hash.values.first}
     end
+
+    def destroy_all
+      self.each do |item|
+        self.first.class.destory(item.id)
+      end
+    end
   end
 end

@@ -4,7 +4,7 @@ require 'active_support/inflector'
 module Associations
   def has_many(association)
     define_method(association) do
-      rows = self.class.connection.execute <<-SQL
+      rows = self.class.execute <<-SQL
         SELECT * FROM #{association.to_s.singularize}
         WHERE #{self.class.table}_id = #{self.id}
       SQL
@@ -21,7 +21,7 @@ module Associations
 
   def has_one(association)
     define_method(association) do
-      rows = self.class.connection.execute <<-SQL
+      rows = self.class.execute <<-SQL
         SELECT * FROM #{association.to_s.singularize}
         WHERE #{self.class.table}_id = #{self.id}
       SQL

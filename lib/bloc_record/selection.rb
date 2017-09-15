@@ -7,7 +7,7 @@ module Selection
       if ids.length == 1
         find_one(ids.first)
       else
-        rows = connection.execute <<-SQL
+        rows = self.class.execute <<-SQL
           SELECT #{columns.join ","} FROM #{table}
           WHERE id IN (#{ids.join(",")});
         SQL
@@ -42,7 +42,7 @@ module Selection
   end
 
   def find_each(options = {})
-    row = connection.execute <<-SQL
+    row = self.class.execute <<-SQL
       SELECT * FROM #{table}
       ORDER BY #{table}
       LIMIT #{options[:batch_size]};
@@ -54,7 +54,7 @@ module Selection
   end
 
   def find_in_batches(start, batch_size)
-    rows = connection.execute <<-SQL
+    rows = self.class.execute <<-SQL
       SELECT #{columns.join ","} FROM #{table}
       LIMIT #{start}, #{batch_size};
     SQL
@@ -64,7 +64,7 @@ module Selection
 
   def take(num=1)
     if num > 1
-      rows = connection.execute <<-SQL
+      rows = self.class.execute <<-SQL
         SELECT #{columns.join ","} FROM #{table}
         ORDER BY random()
         LIMIT #{num};
@@ -108,7 +108,7 @@ module Selection
   end
 
   def all
-    rows = connection.execute <<-SQL
+    rows = self.class.execute <<-SQL
       SELECT #{columns.join ","} FROM #{table}
     SQL
 
@@ -134,7 +134,7 @@ module Selection
       WHERE #{expression};
     SQL
 
-    rows = connection.execute(sql, params)
+    rows = self.class.execute(sql, params)
     rows_to_array(rows)
   end
 
@@ -151,7 +151,7 @@ module Selection
       order = order_hash.map { |key, value| "#{key}=#{BlocRecord::Utility.sql_strings(value)}"}.join(",")
     end
 
-    rows = connection.execute <<-SQL
+    rows = self.class.execute <<-SQL
       SELECT * FROM #{table}
       ORDER BY #{order}
     SQL
@@ -162,24 +162,24 @@ module Selection
   def join(*args)
     if args.count > 1
       joins = args.map { |arg| "INNER JOIN #{arg} ON #{arg}.#{table}_id = #{table}.id"}.join(" ")
-      rows = connection.execute <<-SQL
+      rows = self.class.execute <<-SQL
         SELECT * FROM #{table} #{joins}
       SQL
     else
       case args.first
       when String
-        rows = connection.execute <<-SQL
+        rows = self.class.execute <<-SQL
           SELECT * FROM #{table} #{BlocRecord::Utility.sql_strings(args.first)};
         SQL
       when Symbol
-        rows = connection.execute <<-SQL
+        rows = self.class.execute <<-SQL
           SELECT * FROM #{table}
           INNER JOIN #{args.first} ON #{args.first}.#{table}_id = #{table}.id
         SQL
       when Hash
         key = args.first.keys.first
         value = args.first[key]
-        rows = connection.execute <<-SQL
+        rows = self.class.execute <<-SQL
           SELECT * FROM #{table}
           INNER JOIN #{key} ON #{key}.#{table}_id = #{table}.id
           INNER JOIN #{value} ON #{value}.#{key}_id = #{key}.id
